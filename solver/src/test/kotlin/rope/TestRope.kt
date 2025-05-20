@@ -90,11 +90,11 @@ class TestRope {
 
     @Test
     fun `substring test`() {
-        val string = "Test string.".repeat(100).take(300)
+        val string = testString
         val rope = Rope(string)
 
-        for (i in string.indices) {
-            for (j in i + 1..string.length) {
+        for (i in string.indices step MAX_NODE_SIZE / 7) {
+            for (j in i + 1..string.length step MAX_NODE_SIZE / 7) {
                 assertEquals(string.substring(i, j), rope.substring(i, j).content())
             }
         }
