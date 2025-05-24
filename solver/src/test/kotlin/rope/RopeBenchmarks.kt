@@ -3,9 +3,7 @@ package rope
 import org.ucfs.input.rope.Rope
 
 class ConcatRopesBenchmark : Benchmark<Rope>("RopeConcat") {
-    override fun prepare(input: String): Rope {
-        return Rope(input)
-    }
+    override fun prepare(input: String): Rope = Rope(input)
 
     override fun execute(input: Rope) {
         (input + input).rebalance()
@@ -13,9 +11,7 @@ class ConcatRopesBenchmark : Benchmark<Rope>("RopeConcat") {
 }
 
 class ConcatStringsBenchmark : Benchmark<String>("StringConcat") {
-    override fun prepare(input: String): String {
-        return input
-    }
+    override fun prepare(input: String): String = input
 
     override fun execute(input: String) {
         input + input
@@ -23,9 +19,7 @@ class ConcatStringsBenchmark : Benchmark<String>("StringConcat") {
 }
 
 class ConcatMultipleRopesBenchmark(private val times: Int) : Benchmark<Rope>("ConcatMultipleRopes") {
-    override fun prepare(input: String): Rope {
-        return Rope(input)
-    }
+    override fun prepare(input: String): Rope = Rope(input)
 
     override fun execute(input: Rope) {
         var result = input
@@ -34,9 +28,7 @@ class ConcatMultipleRopesBenchmark(private val times: Int) : Benchmark<Rope>("Co
 }
 
 class ConcatMultipleStringsBenchmark(private val times: Int) : Benchmark<String>("ConcatMultipleStrings") {
-    override fun prepare(input: String): String {
-        return input
-    }
+    override fun prepare(input: String): String = input
 
     override fun execute(input: String) {
         var result = input
@@ -45,9 +37,7 @@ class ConcatMultipleStringsBenchmark(private val times: Int) : Benchmark<String>
 }
 
 class SubRopeBenchmark(private val times: Int) : Benchmark<Rope>("SubRope") {
-    override fun prepare(input: String): Rope {
-        return Rope(input)
-    }
+    override fun prepare(input: String): Rope = Rope(input)
 
     override fun execute(input: Rope) {
         repeat(times) {
@@ -57,13 +47,27 @@ class SubRopeBenchmark(private val times: Int) : Benchmark<Rope>("SubRope") {
 }
 
 class SubStringBenchmark(private val times: Int) : Benchmark<String>("SubString") {
-    override fun prepare(input: String): String {
-        return input
-    }
+    override fun prepare(input: String): String = input
 
     override fun execute(input: String) {
         repeat(times) {
             input.substring(2 * input.length / 7, 5 * input.length / 7)
         }
+    }
+}
+
+class IterateRopeBenchmark : Benchmark<Rope>("SubRope") {
+    override fun prepare(input: String): Rope = Rope(input)
+
+    override fun execute(input: Rope) {
+        input.asIterable().count()
+    }
+}
+
+class IterateStringBenchmark : Benchmark<String>("SubString") {
+    override fun prepare(input: String): String = input
+
+    override fun execute(input: String) {
+        input.asIterable().count()
     }
 }

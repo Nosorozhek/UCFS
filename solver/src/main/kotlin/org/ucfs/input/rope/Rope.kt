@@ -7,6 +7,13 @@ internal const val MAX_DEPTH: Int = 32
 
 fun Rope(text: String = ""): Rope = Rope(initTree(text, 0, text.length))
 
+/**
+ * A structure that represents a string and provides efficient addition and substring operations.
+ * Implementation is based on the article:
+ * "Ropes: An Alternative to Strings" by Hans-J. Boehm, Russ Atkinson, and Michael Plass.
+ * Published in Software—Practice & Experience, Volume 25, Issue 12, 1995, pages 1315–1330.
+ * DOI: https://doi.org/10.1002/spe.4380251203
+ */
 class Rope(private val rootNode: RopeNode) : Iterable<Char> {
     /**
      * Returns a new rope obtained by concatenating two ropes.
