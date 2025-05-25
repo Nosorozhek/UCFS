@@ -1,9 +1,15 @@
 package org.ucfs.input.rope
 
+import org.ucfs.input.IInputGraph
+import org.ucfs.input.ILabel
+import org.ucfs.input.TerminalInputLabel
+import org.ucfs.rsm.symbol.Term
 import java.util.*
 
 internal const val MAX_NODE_SIZE: Int = 1024
 internal const val MAX_DEPTH: Int = 32
+
+class CharLabel(char: Char) : ILabel by TerminalInputLabel(Term(char))
 
 fun Rope(text: String = ""): Rope = Rope(initTree(text, 0, text.length))
 
@@ -119,4 +125,54 @@ class Rope(private val rootNode: RopeNode) : Iterable<Char> {
      * Note that balanced ropes may still contain unbalanced subropes.
      */
     fun rebalance(): Rope = Rope(rootNode.rebalance())
+
+    /**
+     * Returns a new rope with the specified rope [text] inserted at the given [offset].
+     *
+     * @param offset the position in the rope where the new text will be inserted.
+     * @param text the rope to insert.
+     */
+    fun insert(offset: Int, text: Rope): Rope = substring(0, offset) + text + substring(offset, length)
+
+    /**
+     * Returns a new rope with the specified string [text] inserted at the given [offset].
+     *
+     * @param offset the position in the rope where the new text will be inserted.
+     * @param text the string to insert.
+     */
+    fun insert(offset: Int, text: String): Rope = insert(offset, Rope(text))
+
+    /**
+     * Returns a new rope with a substring of length [length] removed,
+     * starting from the given [offset].
+     *
+     * @param offset the start position of the substring to delete.
+     * @param length the number of characters to delete.
+     */
+    fun delete(offset: Int, length: Int): Rope = substring(0, offset) + substring(offset + length, this.length)
+
+    /**
+     * Returns a new rope with a substring of [length] replaced by the specified rope [text],
+     * starting at the given [offset].
+     *
+     * @param offset the start position where replacement begins.
+     * @param length the number of characters to replace.
+     * @param text the rope to insert in place of the removed content.
+     */
+    fun replace(offset: Int, length: Int, text: Rope): Rope =
+        substring(0, offset) + text + substring(offset + length, this.length)
+
+    /**
+     * Returns a new rope with a substring of [length] replaced by the specified string [text],
+     * starting at the given [offset].
+     *
+     * @param offset the start position where replacement begins.
+     * @param length the number of characters to replace.
+     * @param text the string to insert in place of the removed content.
+     */
+    fun replace(offset: Int, length: Int, text: String): Rope =
+        replace(offset, length, Rope(text))
+
+
+    fun getGraph(): IInputGraph<Int, TerminalInputLabel> = TODO()
 }

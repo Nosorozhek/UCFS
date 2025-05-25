@@ -98,6 +98,128 @@ class TestRope {
                 assertEquals(string.substring(i, j), rope.substring(i, j).content())
             }
         }
-
     }
+
+    @Test
+    fun `insert in the middle test`() {
+        val rope = Rope(testString)
+        val insert = Rope(testString.reversed())
+        val offset = testString.length / 2
+        val result = rope.insert(offset, insert)
+
+        val expected = testString.substring(0, offset) +
+                insert.content() +
+                testString.substring(offset)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `insert at the start test`() {
+        val rope = Rope(testString)
+        val insert = testString.reversed()
+        val result = rope.insert(0, insert)
+
+        val expected = insert + testString
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `insert at the end test`() {
+        val rope = Rope(testString)
+        val insert = testString.reversed()
+        val result = rope.insert(rope.length, insert)
+
+        val expected =  testString + insert
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `delete from the middle test`() {
+        val rope = Rope(testString)
+        val offset = testString.length / 3
+        val deleteLength = MAX_NODE_SIZE * 2
+        val result = rope.delete(offset, deleteLength)
+
+        val expected = testString.removeRange(offset, offset + deleteLength)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `delete from start to near end test`() {
+        val rope = Rope(testString)
+        val result = rope.delete(0, testString.length - 10)
+        val expected = testString.takeLast(10)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `delete from almost start to the end test`() {
+        val rope = Rope(testString)
+        val result = rope.delete(10, testString.length)
+        val expected = testString.take(10)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `replace in the middle test`() {
+        val rope = Rope(testString)
+        val replacement = Rope(testString.reversed())
+        val offset = testString.length / 4
+        val lengthToReplace = MAX_NODE_SIZE * 2
+
+        val result = rope.replace(offset, lengthToReplace, replacement)
+
+        val expected = testString.substring(0, offset) +
+                replacement.content() +
+                testString.substring(offset + lengthToReplace)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `replace near the end test`() {
+        val rope = Rope(testString)
+        val replacement = testString.reversed()
+        val offset = testString.length - MAX_NODE_SIZE
+        val lengthToReplace = MAX_NODE_SIZE
+
+        val result = rope.replace(offset, lengthToReplace, replacement)
+
+        val expected = testString.substring(0, offset) +
+                replacement +
+                testString.substring(offset + lengthToReplace)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `replace beginning test`() {
+        val rope = Rope(testString)
+        val replacement = Rope("replacement")
+        val offset = 0
+        val lengthToReplace = MAX_NODE_SIZE / 3
+
+        val result = rope.replace(offset, lengthToReplace, replacement)
+
+        val expected = replacement.content() + testString.substring(lengthToReplace)
+        assertEquals(expected, result.content())
+    }
+
+    @Test
+    fun `replace entire rope test`() {
+        val replacement = Rope(testString.reversed().take(testString.length / 2))
+        val result = Rope(testString).replace(0, testString.length, replacement)
+
+        assertEquals(replacement.content(), result.content())
+    }
+
+    @Test
+    fun `replace with empty string test`() {
+        val rope = Rope(testString)
+        val offset = testString.length / 2 - 100
+        val lengthToReplace = 200
+
+        val result = rope.replace(offset, lengthToReplace, "")
+        val expected = testString.removeRange(offset, offset + lengthToReplace)
+        assertEquals(expected, result.content())
+    }
+
 }
