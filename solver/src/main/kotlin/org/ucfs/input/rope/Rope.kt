@@ -6,8 +6,8 @@ import org.ucfs.input.TerminalInputLabel
 import org.ucfs.rsm.symbol.Term
 import java.util.*
 
-internal const val MAX_NODE_SIZE: Int = 1024
-internal const val MAX_DEPTH: Int = 32
+const val MAX_NODE_SIZE: Int = 1024
+const val MAX_DEPTH: Int = 32
 
 class CharLabel(char: Char) : ILabel by TerminalInputLabel(Term(char))
 
@@ -174,5 +174,5 @@ class Rope(private val rootNode: RopeNode) : Iterable<Char> {
         replace(offset, length, Rope(text))
 
 
-    fun getGraph(): IInputGraph<Int, TerminalInputLabel> = TODO()
+    fun getGraph(): IInputGraph<Int, CharLabel> = TODO()
 }
