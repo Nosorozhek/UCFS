@@ -2,6 +2,8 @@ package rope
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.ucfs.input.InputGraph
+import org.ucfs.input.TerminalInputLabel
 import org.ucfs.input.rope.*
 import kotlin.test.assertEquals
 
@@ -129,7 +131,7 @@ class TestRope {
         val insert = testString.reversed()
         val result = rope.insert(rope.length, insert)
 
-        val expected =  testString + insert
+        val expected = testString + insert
         assertEquals(expected, result.content())
     }
 
@@ -222,4 +224,21 @@ class TestRope {
         assertEquals(expected, result.content())
     }
 
+    private fun InputGraph<IteratorGraphVertex, TerminalInputLabel>.content(): String = sequence {
+        var currentEdge = getEdges(getInputStartVertices().first()).firstOrNull()
+        while (currentEdge != null) {
+            yieldAll(currentEdge.label.toString().toList())
+            currentEdge = getEdges(currentEdge.targetVertex).firstOrNull()
+        }
+    }.joinToString(separator = "")
+
+    @Test
+    fun `test graph persistence`() {
+        val rope = Rope(testString)
+        val newRope = rope + rope
+        assertEquals(testString, rope.ropeIterator().iterator().asSequence().joinToString(separator = "") )
+        assertEquals(testString + testString, newRope.ropeIterator().iterator().asSequence().joinToString(separator = "") )
+        assertEquals(testString, rope.getGraph().content())
+        assertEquals(testString + testString, newRope.getGraph().content())
+    }
 }

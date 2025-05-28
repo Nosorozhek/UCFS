@@ -1,15 +1,13 @@
 package org.ucfs.input.rope
 
-import org.ucfs.input.IInputGraph
-import org.ucfs.input.ILabel
+import org.ucfs.input.Edge
+import org.ucfs.input.InputGraph
 import org.ucfs.input.TerminalInputLabel
 import org.ucfs.rsm.symbol.Term
 import java.util.*
 
 const val MAX_NODE_SIZE: Int = 1024
 const val MAX_DEPTH: Int = 32
-
-class CharLabel(char: Char) : ILabel by TerminalInputLabel(Term(char))
 
 fun Rope(text: String = ""): Rope = Rope(initTree(text, 0, text.length))
 
@@ -31,62 +29,74 @@ class Rope(private val rootNode: RopeNode) : Iterable<Char> {
 
     operator fun plus(string: String): Rope = plus(Rope(string))
 
-    override fun iterator() = object : Iterator<Char> {
-        private val nodes = Stack<RopeNode>()
-        private var leafPos: Int
+    override fun iterator(): Iterator<Char> = object : Iterator<Char> {
+        private var currentNode: RopeNode?
+        private val nodesStack: Stack<RopeNode>
+        private var currentLeaf: Leaf?
+        private var posInLeaf: Int
 
         init {
-            leafPos = 0
-            if (rootNode.length > 0) {
-                var current = rootNode
-                while (current is InternalNode) {
-                    nodes.push(current)
-                    current = current.left
-                }
-                nodes.push(current)
+            currentNode = this@Rope.rootNode
+            nodesStack = Stack<RopeNode>()
+            currentLeaf = null
+            posInLeaf = 0
 
-                moveToNextLeafIfNeeded()
+            if (currentNode!!.length > 0) {
+                advanceToNextNonEmptyLeaf()
+            } else {
+                currentNode = null
             }
         }
 
         override fun hasNext(): Boolean {
-            return nodes.isNotEmpty()
+            return currentLeaf != null && posInLeaf < currentLeaf!!.length
         }
 
         override fun next(): Char {
             if (!hasNext()) throw NoSuchElementException()
 
-            val currentLeaf = nodes.peek() as Leaf
-            val char = currentLeaf.text[leafPos++]
-            moveToNextLeafIfNeeded()
+            val char = currentLeaf!!.text[posInLeaf++]
+
+            if (posInLeaf >= currentLeaf!!.text.length) {
+                advanceToNextNonEmptyLeaf()
+            }
             return char
         }
 
-        private fun moveToNextLeafIfNeeded() {
-            var currentLeaf = nodes.peek() as Leaf
-            var current: RopeNode = currentLeaf
-            while (nodes.isNotEmpty() && leafPos >= currentLeaf.text.length) {
-                nodes.pop() // Pop current Leaf
-                if (nodes.empty()) {
+        private fun advanceToNextNonEmptyLeaf() {
+            while (true) {
+                if (currentNode != null) {
+                    while (currentNode != null) {
+                        val node = currentNode!!
+                        nodesStack.push(node)
+                        currentNode = if (node is InternalNode) node.left else null
+                    }
+                } else if (nodesStack.isEmpty()) {
+                    currentLeaf = null
+                    posInLeaf = 0
                     return
                 }
-                var parent = nodes.peek() as InternalNode
-                while (parent.right === current) { // It is essential to compare nodes by reference
-                    current = nodes.pop()
-                    if (nodes.isEmpty()) {
-                        return
-                    }
-                    parent = nodes.peek() as InternalNode
+
+                if (nodesStack.isEmpty()){
+                    currentLeaf = null
+                    posInLeaf = 0
+                    return
                 }
 
-                current = parent.right
-                nodes.push(current)
-                while (current is InternalNode) {
-                    current = (current as InternalNode).left
-                    nodes.push(current)
+                val poppedNode = nodesStack.pop()
+
+                if (poppedNode is Leaf) {
+                    if (poppedNode.text.isNotEmpty()) {
+                        posInLeaf = 0
+                        currentLeaf = poppedNode
+                        currentNode = null
+                        return
+                    } else {
+                        currentNode = null
+                    }
+                } else {
+                    currentNode = (poppedNode as InternalNode).right
                 }
-                currentLeaf = current as Leaf
-                leafPos = 0
             }
         }
     }
@@ -174,5 +184,114 @@ class Rope(private val rootNode: RopeNode) : Iterable<Char> {
         replace(offset, length, Rope(text))
 
 
-    fun getGraph(): IInputGraph<Int, CharLabel> = TODO()
+    fun getGraph(): InputGraph<IteratorGraphVertex, TerminalInputLabel> =
+        object : InputGraph<IteratorGraphVertex, TerminalInputLabel>() {
+            override fun getInputStartVertices(): MutableSet<IteratorGraphVertex> =
+                mutableSetOf(IteratorGraphVertex(PersistentRopeIterator(this@Rope)))
+
+            override fun isFinal(vertex: IteratorGraphVertex): Boolean = !vertex.iterator.hasNext()
+
+            override fun isStart(vertex: IteratorGraphVertex): Boolean = vertex.iterator.isStart()
+
+            override fun getEdges(from: IteratorGraphVertex): MutableList<Edge<IteratorGraphVertex, TerminalInputLabel>> {
+                if (!from.iterator.hasNext()) return mutableListOf()
+                val newVertexIterator = from.iterator.copy()
+                val charLabel = newVertexIterator.next()
+                return mutableListOf(Edge(TerminalInputLabel(Term(charLabel)), IteratorGraphVertex(newVertexIterator)))
+            }
+        }
+
+
+    internal fun ropeIterator(): PersistentRopeIterator = PersistentRopeIterator(this)
+
+    internal class PersistentRopeIterator private constructor(
+        private var currentNode: RopeNode?,
+        private var nodes: PersistentStack<RopeNode>,
+        private var currentLeaf: Leaf?,
+        private var posInLeaf: Int,
+        private var isStart: Boolean,
+    ) : Iterator<Char> {
+        constructor(rope: Rope) : this(
+            rope.rootNode,
+            PersistentStack<RopeNode>(),
+            null,
+            0,
+            true
+        ) {
+            if (this.currentNode != null && this.currentNode!!.length > 0) {
+                advanceToNextNonEmptyLeaf()
+            } else {
+                this.currentNode = null
+                this.currentLeaf = null
+            }
+        }
+
+        fun isStart(): Boolean = isStart
+
+        fun copy(): PersistentRopeIterator {
+            return PersistentRopeIterator(
+                currentNode,
+                nodes,
+                currentLeaf,
+                posInLeaf,
+                isStart
+            )
+        }
+
+        override fun hasNext(): Boolean {
+            return currentLeaf != null && posInLeaf < currentLeaf!!.length
+        }
+
+        override fun next(): Char {
+            if (!hasNext()) throw NoSuchElementException()
+            isStart = false
+
+            val char = currentLeaf!!.text[posInLeaf++]
+
+            if (posInLeaf >= currentLeaf!!.length) {
+                advanceToNextNonEmptyLeaf()
+            }
+            return char
+        }
+
+        private fun advanceToNextNonEmptyLeaf() {
+            while (true) {
+                if (currentNode != null) {
+                    while (currentNode != null) {
+                        val node = currentNode!!
+                        nodes = nodes.push(node)
+                        currentNode = if (node is InternalNode) node.left else null
+                    }
+                } else if (nodes.isEmpty()) {
+                    currentLeaf = null
+                    posInLeaf = 0
+                    return
+                }
+                if (nodes.isEmpty()) {
+                    currentLeaf = null
+                    posInLeaf = 0
+                    return
+                }
+
+                val poppedNode = nodes.peek()!!
+                nodes = nodes.pop()
+
+                if (poppedNode is Leaf) {
+                    if (poppedNode.text.isNotEmpty()) {
+                        currentLeaf = poppedNode
+                        posInLeaf = 0
+                        currentNode = null
+                        return
+                    } else {
+                        currentNode = null
+                    }
+                } else {
+                    currentNode = (poppedNode as InternalNode).right
+                }
+            }
+        }
+    }
 }
+
+data class IteratorGraphVertex internal constructor(internal val iterator: Rope.PersistentRopeIterator)
+
