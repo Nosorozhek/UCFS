@@ -2,10 +2,10 @@ package rope
 
 import org.ucfs.input.rope.Rope
 
-class ConcatRopesBenchmark : Benchmark<Rope>("RopeConcat") {
-    override fun prepare(input: String): Rope = Rope(input)
+class ConcatRopesBenchmark : Benchmark<Rope<Char>>("RopeConcat") {
+    override fun prepare(input: String): Rope<Char> = Rope(input)
 
-    override fun execute(input: Rope) {
+    override fun execute(input: Rope<Char>) {
         (input + input).rebalance()
     }
 }
@@ -18,10 +18,10 @@ class ConcatStringsBenchmark : Benchmark<String>("StringConcat") {
     }
 }
 
-class ConcatMultipleRopesBenchmark(private val times: Int) : Benchmark<Rope>("ConcatMultipleRopes") {
-    override fun prepare(input: String): Rope = Rope(input)
+class ConcatMultipleRopesBenchmark(private val times: Int) : Benchmark<Rope<Char>>("ConcatMultipleRopes") {
+    override fun prepare(input: String): Rope<Char> = Rope(input)
 
-    override fun execute(input: Rope) {
+    override fun execute(input: Rope<Char>) {
         var result = input
         repeat(times) { result += input }
     }
@@ -36,10 +36,10 @@ class ConcatMultipleStringsBenchmark(private val times: Int) : Benchmark<String>
     }
 }
 
-class SubRopeBenchmark(private val times: Int) : Benchmark<Rope>("SubRope") {
-    override fun prepare(input: String): Rope = Rope(input)
+class SubRopeBenchmark(private val times: Int) : Benchmark<Rope<Char>>("SubRope") {
+    override fun prepare(input: String): Rope<Char> = Rope(input)
 
-    override fun execute(input: Rope) {
+    override fun execute(input: Rope<Char>) {
         repeat(times) {
             input.substring(2 * input.length / 7, 5 * input.length / 7)
         }
@@ -56,10 +56,10 @@ class SubStringBenchmark(private val times: Int) : Benchmark<String>("SubString"
     }
 }
 
-class IterateRopeBenchmark : Benchmark<Rope>("SubRope") {
-    override fun prepare(input: String): Rope = Rope(input)
+class IterateRopeBenchmark : Benchmark<Rope<Char>>("SubRope") {
+    override fun prepare(input: String): Rope<Char> = Rope(input)
 
-    override fun execute(input: Rope) {
+    override fun execute(input: Rope<Char>) {
         input.asIterable().count()
     }
 }

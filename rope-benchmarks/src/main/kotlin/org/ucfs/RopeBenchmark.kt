@@ -10,7 +10,7 @@ import org.ucfs.input.rope.Rope
 open class RopeBenchmark {
     protected open var benchmarkSize = 0
 
-    protected lateinit var ropeInput: Rope
+    protected lateinit var ropeInput: Rope<Char>
     protected lateinit var stringInput: String
 
     @Setup
